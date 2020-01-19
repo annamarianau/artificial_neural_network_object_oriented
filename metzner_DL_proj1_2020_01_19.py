@@ -25,15 +25,18 @@ class Neuron:
         print(self.bias)
         print(self.input_vals)
         print(self.weights)
-        print(self.activate())
-        #print(self.calculate())
+        print(self.calculate())
 
     # Class method activate - phi(bias + sum of weights * input)
-    def activate(self):
-        return self.bias + np.dot(self.weights,self.input_vals)
+    def activate(self, z):
+        if self.activation_function == "logistic":
+            return log_act(z)
+        elif self.activation_function == "linear":
+            return lin_act(z)
+
 
     def calculate(self):
-        return self.actfun(self.activate())
+        return self.activate(self.bias + np.dot(self.weights,self.input_vals))
 
 
 
@@ -80,16 +83,15 @@ def bin_cross_entropy_loss(predicted, actual):
     return predicted, actual
 
 
-test_weights = [1, 2, 3, 4, 5]
-test_input = [5, 4, 3, 2, 1]
+test_weights = [1, 2, 3]
+test_input = [5, 4, 3]
 test_bias = 1
 a = 1
 
 # Driver code main()
 def main():
     print("This is the driver code")
-    first_neuron = Neuron(a, test_input, 0.1, test_weights, test_bias)
-    first_neuron.activate()
+    first_neuron = Neuron("logistic", test_input, 0.1, test_weights, test_bias)
     first_neuron.print_activate()
 
 
