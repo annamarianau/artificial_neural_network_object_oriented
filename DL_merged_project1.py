@@ -68,14 +68,13 @@ class FullyConnectedLayer:
 
 class NeuralNetwork:
     def __init__(self, num_layers, num_neurons_layer, vec_activationFunction, num_Input, lossFunction,
-                 learnRate, actualOutput, weightsNetwork=None, biasNetwork=None):
+                 learnRate, weightsNetwork=None, biasNetwork=None):
         self.number_layers = num_layers
         self.number_neurons_layer = num_neurons_layer
         self.activation_function = vec_activationFunction
         self.number_input = num_Input
         self.loss_function = lossFunction
         self.learn_rate = learnRate
-        self.actual_output = actualOutput
         self.weights = weightsNetwork
         self.bias = biasNetwork
 
@@ -99,11 +98,11 @@ class NeuralNetwork:
                                                                      bias=self.bias[i]))
 
 
-    def calculateloss(self, predicted_output):
+    def calculateloss(self, predicted_output, actual_output):
         if self.loss_function == "MSE":
-            return mse_loss(predicted_output, self.actual_output)
+            return mse_loss(predicted_output, actual_output)
         elif self.loss_function == "BinCrossEntropy":
-            return bin_cross_entropy_loss(predicted_output, self.actual_output)
+            return bin_cross_entropy_loss(predicted_output, actual_output)
 
 """
 Activation Functions
@@ -131,7 +130,7 @@ Loss Functions
 
 
 def mse_loss(predicted_output, actual_output):
-    return np.sum(predicted_output - actual_output) ** 2 / len(actual_output)
+    return np.square(np.subtract(predicted_output, actual_output)).mean()
 
 
 def bin_cross_entropy_loss(predicted_output, actual_output):
@@ -139,17 +138,30 @@ def bin_cross_entropy_loss(predicted_output, actual_output):
 
 
 vec_AF = ["logistic", "logistic"]
-weights_TEST = [[(1,2),(2,3)],[(3,4),(4,5)]]
-bias_Test = [1,2]
+weights_TEST = [[(0.15,0.2),(0.25,0.3)],[(0.4,0.45),(0.50,0.55)]]
+bias_Test = [0.35,0.60]
+input_vec = [0.05, 0.10]
+actual_output = [0.01, 0.99]
+
+
 # Driver code main()
 def main():
-    NN = NeuralNetwork(num_layers=2, num_neurons_layer=[2, 2], vec_activationFunction=vec_AF, num_Input=2, lossFunction="MSE", learnRate=0.01, actualOutput=[0.01, 0.99], weightsNetwork=weights_TEST, biasNetwork=bias_Test)
+    NN = NeuralNetwork(num_layers=2, num_neurons_layer=[2, 2], vec_activationFunction=vec_AF, num_Input=2, lossFunction="MSE", learnRate=0.01, weightsNetwork=weights_TEST, biasNetwork=bias_Test)
+    """
+    Feedforward algorithm
+    """
+    global input_vec
+    predicted_output_list = []
+    count_layer = 0
     for layer in NN.FullyConnectedLayers:
-        print(layer)
-        print(layer.bias)
-        for neuron in layer.neurons:
-            print(neuron.weights)
-            print(neuron.bias)
+        print(count_layer)
+        predicted_output = layer.calculate(input_vec)
+        predicted_output_list.append(predicted_output)
+        input_vec = predicted_output_list[count_layer]
+        count_layer += 1
+    loss = NN.calculateloss(predicted_output, actual_output)
+    print(loss)
+    print(predicted_output_list)
 
 
 if __name__ == '__main__':
