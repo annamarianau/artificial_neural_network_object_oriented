@@ -9,10 +9,13 @@ Defining the following classes:
 
 
 class Neuron:
-    # Initializing Neuron class with an activation function (activationFunction), input values (inputVals), learning
-    # rate (learnRate), vector with weights based on the number of neurons of previous layer / input layer (weights),
-    # and one value for the bias of a neuron. Weights and bias are randomized between 0 and 1 from a uniform
-    # distribution if no optional argument is given.
+
+    """
+    Initializing Neuron class with an activation function (activationFunction), input values (numInput), learning
+    rate (learnRate), vector with weights based on the number of neurons of previous layer / input layer (weights),
+    and one value for the bias of a neuron. Weights and bias are randomized between 0 and 1 from a uniform
+    distribution if no optional argument is given.
+    """
 
     def __init__(self, activationFunction, numInput, learnRate, weights=None, bias=None):
         self.activation_function = activationFunction
@@ -21,7 +24,7 @@ class Neuron:
         if weights is not None:
             self.weights = weights
         else:
-            self.weights = np.random.uniform(0, 1, len(inputVals))
+            self.weights = np.random.uniform(0, 1, len(numInput))
         if bias is not None:
             self.bias = bias
         else:
@@ -47,92 +50,64 @@ class FullyConnectedLayer:
         self.weights = weights
         self.bias = bias
 
+
+
+
     def calculate(self):
         """
         Computes the output of all neurons in one layer
         :return:
         """
-        return pass
-
-
-
+        pass
+        return
 
 
 
 class NeuralNetwork:
-    def __init__(self, num_layers, num_neurons_layer):
+    def __init__(self, num_layers, num_neurons_layer, vec_activationFunction, num_Input, lossFunction,
+                 learnRate, actualOutput, weightsNetwork=None, biasNetwork=None):
         self.number_layers = num_layers
         self.number_neurons_layer = num_neurons_layer
+        self.activation_function = vec_activationFunction
+        self.number_input = num_Input
+        self.loss_function = lossFunction
+        self.learn_rate = learnRate
+        self.actual_output = actualOutput
+        self.weights = weightsNetwork
+        self.bias = biasNetwork
+
+        if self.weights is None:
+            self.FullyConnectedLayers = []
+            for i in range(self.number_layers):
+                self.FullyConnectedLayers.append(FullyConnectedLayer(num_neurons=self.number_neurons_layer[i],
+                                                                     activationFunction=self.activation_function[i],
+                                                                     num_Input=self.number_input,
+                                                                     learnRate=self.learn_rate,
+                                                                     weights=None,
+                                                                     bias=None))
+        else:
+            self.FullyConnectedLayers = []
+            for i in range(self.number_layers):
+                print(i)
+                self.FullyConnectedLayers.append(FullyConnectedLayer(num_neurons=self.number_neurons_layer[i],
+                                                                     activationFunction=self.activation_function[i],
+                                                                     num_Input=self.number_input,
+                                                                     learnRate=self.learn_rate,
+                                                                     weights=self.weights[i],
+                                                                     bias=self.bias[i]))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"""
-
-
-
-class FullyConnectedLayer:
-    def __init__(self, activation_function, number_neurons, input_vals, learn_rate, weights = True, bias = True):
-        self.activation_function = activation_function
-        self.number_neurons = number_neurons
-        self.input_vals = input_vals
-        self.learn_rate = learn_rate
-        self.weights = weights if weights is not True else np.random.uniform(0, 1, len(input_vals))
-        self.bias = bias if bias is not True else np.random.uniform(0, 1)
-
-
-    def Generate_Neurons(self):
-        return [Neuron(self.activation_function, self.input_vals, self.learn_rate, self.weights[i], self.bias[i]) for i in range(self.number_neurons)]
-
-    def Print_Neurons(self):
-        print(self.Generate_Neurons())
-
-    def calculate(self):
-        pass
-
-"""
-"""
-
-class NeuralNetwork:
-    def __init__(self, number_layers, vec_number_neurons_layer, vec_activation_function, loss_function, learn_rate,
-                 input_network, actual_output, vec_weights, vec_biases):
-        self.number_layers = number_layers
-        self.vec_number_neurons_layer = vec_number_neurons_layer
-        self.vec_activation_function = vec_activation_function
-        self.loss_function = loss_function
-        self.actual_output = actual_output
-
-    def calculate(self):
-        pass
-
-    def calculateloss(self, output):
+    def calculateloss(self, predicted_output):
         if self.loss_function == "MSE":
             return mse_loss(predicted_output, self.actual_output)
-        elif self.loss_function == "Bin_Cross_Entropy":
+        elif self.loss_function == "BinCrossEntropy":
             return bin_cross_entropy_loss(predicted_output, self.actual_output)
 
-    def feedforward(self):
+    def train(self):
         pass
 
-    def backprop(self):
-        pass
-"""
+
+
 
 """
 Activation Functions
@@ -158,46 +133,24 @@ Loss Functions
 - actual: Array containing the ground truth value for each sample, respectively.
 """
 
-"""
-def mse_loss(predicted, actual):
-    return np.sum(predicted - actual) ** 2 / len(actual)
+
+def mse_loss(predicted_output, actual_output):
+    return np.sum(predicted_output - actual_output) ** 2 / len(actual_output)
 
 
-def bin_cross_entropy_loss(predicted, actual):
-    return predicted, actual
-"""
+def bin_cross_entropy_loss(predicted_output, actual_output):
+    pass
 
-test_input = [0.05, 0.10]
-test_weights = [(0.15, 0.20)]  # , (0.25, 0.30)]
-test_bias = [0.35]  # , 0.60]
 
-<<<<<<< Updated upstream
-=======
-test_weights = [0.15, 0.20]
-test_input = [0.05, 0.10]
-test_bias = 0.35
-a = 1
->>>>>>> Stashed changes
-
+vec_AF = ["logistic", "logistic"]
+weights_TEST = [[(1,2),(2,3)],[(3,4),(4,5)]]
+bias_Test = [1,2]
 # Driver code main()
 def main():
-    neural_net = NeuralNetwork(2, (2,2))
-    neural_net.print_init()
-    neural_net.gen_Layers()
-
-
-    first_neuron = Neuron("logistic", test_input, 0.1, test_weights, test_bias)
-    output_first_layer = first_neuron.calculate()
-    print(output_first_layer)
-
-
-
-
-
-
-    # one_layer = FullyConnectedLayer("logistic", 2, test_input, 0.1, test_weights, test_bias)
-    # one_layer.Print_Neurons()
-
+    NN = NeuralNetwork(num_layers=2, num_neurons_layer=[2, 2], vec_activationFunction=vec_AF, num_Input=2, lossFunction="MSE", learnRate=0.01, actualOutput=[0.01, 0.99], weightsNetwork=weights_TEST, biasNetwork=bias_Test)
+    print(NN.number_neurons_layer)
+    print(NN.weights)
+    print(NN.bias)
 
 if __name__ == '__main__':
     main()
