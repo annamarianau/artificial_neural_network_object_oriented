@@ -171,6 +171,13 @@ test_input = [0.05, 0.10]
 test_weights = [(0.15, 0.20)]  # , (0.25, 0.30)]
 test_bias = [0.35]  # , 0.60]
 
+<<<<<<< Updated upstream
+=======
+test_weights = [0.15, 0.20]
+test_input = [0.05, 0.10]
+test_bias = 0.35
+a = 1
+>>>>>>> Stashed changes
 
 # Driver code main()
 def main():
