@@ -140,7 +140,7 @@ class NeuralNetwork:
             return bin_cross_entropy_loss(predicted_output, actual_output)
 
 """
-Activation Functions
+Activation Functions with their respective prime functions
 - logistic (log_act)
 - linear (lin_act)
 - z: result of the weighted sum of weights (w), biases (b), and inputs (x) - z = np.dot(w,x)-b
@@ -150,9 +150,14 @@ Activation Functions
 def log_act(z):
     return 1 / (1 + np.exp(-z))
 
+def log_act_prime(z):
+    return log_act(z)*(1-log_act(z))
 
 def lin_act(z):
     return z
+
+def lin_act_prime(z):
+    return 1
 
 
 """
@@ -203,6 +208,12 @@ def main():
     print("Total Loss accrued in Network: ", total_loss)
     print("Net output neurons per layer: ", net_output_list)
     print("List with output of individual neurons for all layers: ", predicted_output_list)
+
+    """
+    Back-propagation:
+    
+    """
+
 
 
 
