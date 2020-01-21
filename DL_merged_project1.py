@@ -31,6 +31,10 @@ class Neuron:
         elif self.activation_function == "linear":
             return lin_act(z)
 
+    def net_output_neurons(self, input_vec):
+        return self.bias + np.dot(self.weights, input_vec)
+
+
     def calculate(self, input_vec):
         return self.activate(self.bias + np.dot(self.weights, input_vec))
 
@@ -48,9 +52,17 @@ class FullyConnectedLayer:
             self.bias = np.random.uniform(0, 1)
         # create neurons (stored in a list) of layer
         if weights is None:
-            self.neurons = [Neuron(activationFunction=activationFunction, numInput=self.number_input, learnRate=self.learn_rate, weights=None, bias=self.bias) for i in range(num_neurons)]
+            self.neurons = []
+            for i in range(num_neurons):
+                self.neurons.append(
+                    Neuron(activationFunction=activationFunction, numInput=self.number_input, learnRate=self.learn_rate,
+                           weights=None, bias=self.bias))
         else:
-            self.neurons = [Neuron(activationFunction=activationFunction, numInput=self.number_input, learnRate=self.learn_rate, weights=self.weights[i], bias=self.bias) for i in range(num_neurons)]
+            self.neurons = []
+            for i in range(num_neurons):
+                self.neurons.append(
+                    Neuron(activationFunction=activationFunction, numInput=self.number_input, learnRate=self.learn_rate,
+                           weights=self.weights[i], bias=self.bias))
 
 
     def calculate(self, input_vec):
@@ -59,11 +71,13 @@ class FullyConnectedLayer:
         :return:
         """
         output_vec = []
+        net_output_vec = []
         for neuron in self.neurons:
             output = neuron.calculate(input_vec)
+            net_output = neuron.net_output_neurons(input_vec)
             output_vec.append(output)
-            print(output_vec)
-        return output_vec
+            net_output_vec.append(net_output)
+        return output_vec, net_output_vec
 
 
 class NeuralNetwork:
@@ -130,7 +144,7 @@ Loss Functions
 
 
 def mse_loss(predicted_output, actual_output):
-    return np.square(np.subtract(predicted_output, actual_output)).mean()
+    return np.square(np.subtract(predicted_output, actual_output))*1/2
 
 
 def bin_cross_entropy_loss(predicted_output, actual_output):
@@ -138,8 +152,8 @@ def bin_cross_entropy_loss(predicted_output, actual_output):
 
 
 vec_AF = ["logistic", "logistic"]
-weights_TEST = [[(0.15,0.2),(0.25,0.3)],[(0.4,0.45),(0.50,0.55)]]
-bias_Test = [0.35,0.60]
+weights_TEST = [[(0.15, 0.2), (0.25, 0.3)], [(0.4, 0.45), (0.50, 0.55)]]
+bias_Test = [0.35, 0.60]
 input_vec = [0.05, 0.10]
 actual_output = [0.01, 0.99]
 
@@ -149,19 +163,26 @@ def main():
     NN = NeuralNetwork(num_layers=2, num_neurons_layer=[2, 2], vec_activationFunction=vec_AF, num_Input=2, lossFunction="MSE", learnRate=0.01, weightsNetwork=weights_TEST, biasNetwork=bias_Test)
     """
     Feedforward algorithm
+    for-loop to compute individual (ind_loss) and total loss (total_loss) of each layers (hidden and output) of the 
+    network
+    original input variable (input_vec; "input neurons") of network is updated to values of next layer neurons output 
+    values    
     """
     global input_vec
     predicted_output_list = []
-    count_layer = 0
-    for layer in NN.FullyConnectedLayers:
-        print(count_layer)
+    net_output_list = []
+    for i, layer in enumerate(NN.FullyConnectedLayers):
         predicted_output = layer.calculate(input_vec)
-        predicted_output_list.append(predicted_output)
-        input_vec = predicted_output_list[count_layer]
-        count_layer += 1
-    loss = NN.calculateloss(predicted_output, actual_output)
-    print(loss)
-    print(predicted_output_list)
+        predicted_output_list.append(predicted_output[0])
+        net_output_list.append(predicted_output[1])
+        input_vec = predicted_output_list[i]
+    ind_loss = NN.calculateloss(predicted_output[0], actual_output)
+    print("List with individual Losses for output neurons - Output_1 and Output_2: ", ind_loss)
+    total_loss = np.sum(ind_loss)
+    print("Total Loss accrued in Network: ", total_loss)
+    print("Net output neurons per layer: ", net_output_list)
+    print("List with output of individual neurons for all layers: ", predicted_output_list)
+
 
 
 if __name__ == '__main__':
