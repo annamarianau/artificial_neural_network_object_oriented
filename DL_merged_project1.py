@@ -9,6 +9,14 @@ Defining the following classes:
 
 
 class Neuron:
+    """
+    Initializing the following attributes for the Neuron class:
+    - Activation Function: activationFunction
+    - Number Inputs: numInput
+    - Learning Rate: learnRate
+    - Tuple with weights: weights
+    - Bias: bias
+    """
     # Initializing Neuron class with an activation function (activationFunction), input values (inputVals), learning
     # rate (learnRate), vector with weights based on the number of neurons of previous layer / input layer (weights),
     # and one value for the bias of a neuron. Weights and bias are randomized between 0 and 1 from a uniform
@@ -19,12 +27,20 @@ class Neuron:
         self.number_input = numInput
         self.learn_rate = learnRate
         self.bias = bias
-        if weights is not None:
-            self.weights = weights
+        """
+        If no tuple with weights is given then generate number of weights based on number of inputs
+        If tuple with weights is given then self.weights = weights
+        """
+        if weights is None:
+            self.weights = np.random.uniform(0, 1, self.number_input)
         else:
-            self.weights = np.random.uniform(0, 1, len(numInput))
+            self.weights = weights
 
-    # Class method activate - phi(bias + sum of weights * input)
+    """
+    Class Method
+    Selection of activation function with input variable z
+    z = bias + weights*input (self.bias + self.weights * input_vec)
+    """
     def activate(self, z):
         if self.activation_function == "logistic":
             return log_act(z)
@@ -32,11 +48,16 @@ class Neuron:
             return lin_act(z)
 
     def net_output_neurons(self, input_vec):
+        """
+        computing the weighted sum of weights, input, bias
+        :param input_vec:
+        :return: bias + sum(weights * input)
+        """
         return self.bias + np.dot(self.weights, input_vec)
 
 
     def calculate(self, input_vec):
-        return self.activate(self.bias + np.dot(self.weights, input_vec))
+        return self.activate(self.net_output_neurons(input_vec))
 
 
 class FullyConnectedLayer:
