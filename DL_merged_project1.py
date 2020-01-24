@@ -31,6 +31,7 @@ class Neuron:
         self.output = None
         self.delta = None
         self.updated_weights = []
+        self.updated_bias = None
         """
         If no tuple with weights is given then generate number of weights based on number of inputs
         If tuple with weights is given then self.weights = weights
@@ -205,13 +206,23 @@ def main():
     original input variable (input_vec; "input neurons") of network is updated to values of next layer neurons output 
     values    
     """
+    # setting input_vec to global, since the variable has to be changed for feed forward information
+    # output of neurons from layer will be input of neurons in following layer
     global input_vec
+    # generating a unique vector containing original network input values
+    # used to compute the deltas and weights of the final hidden layer (seen from the back-propagation algorithm)
     vec_input_neurons = input_vec
+    # loop through each layer of network
     for i, layer in enumerate(NN.FullyConnectedLayers):
+        # computing output of each neuron in each layer
+        # calling FullyConnectedLayer method layer.calculate with variable input_vec
         predicted_output = layer.calculate(input_vec)
+        # setting variable input_vec equal to computed predicted_output for next layer computations
         input_vec = predicted_output
+    # computing the individual losses for each output neuron
     ind_loss = NN.calculateloss(input_vec, actual_output_network)
     print("List with individual Losses for output neurons - Output_1 and Output_2: ", ind_loss)
+    # computing total loss by summing individual losses together
     total_loss = np.sum(ind_loss)
     print("Total Loss accrued in Network: ", total_loss)
 
@@ -223,27 +234,58 @@ def main():
     # back prop starts with updating weights connected to output layer
     NN.FullyConnectedLayers.reverse()
     for i, layer in enumerate(NN.FullyConnectedLayers):
+        # if statement is used to check of type of layer:
+        # i=0 --> output layer
+        # i>0 --> hidden layer
         if i == 0:
             print("This is the output layer: ", layer)
+            # loop through layer for every neuron
             for j, neuron in enumerate(layer.neurons):
+                # compute and store the delta as class attribute for each neuron
                 neuron.delta = neuron.calculate_delta_output(actual_output_network[j])
+                # for loop which loops through the neurons of first hidden layer
                 for k, neuron_hidden in enumerate(NN.FullyConnectedLayers[i+1].neurons):
+                    # compute the error of each individual weight based on output of neurons of previous hidden layer
                     error_weight = neuron.delta * neuron_hidden.output
+                    # computing future weights; weights are used in next training iteration
                     updated_weight = neuron.weights[k] - NN.learn_rate * error_weight
+                    # store the values for the updated_weight in a vector
+                    # this vector is later used to overwrite the current weight vector after computing
+                    # all weights updates
                     neuron.updated_weights.append(updated_weight)
+                # Updating the bias for each neuron w.r.t. their delta
+                neuron.updated_bias = neuron.bias - NN.learn_rate * neuron.delta
         else:
             print("This is a hidden layer: ", layer)
             for j, neuron in enumerate(layer.neurons):
-                sum = 0
+                # computing the respective sum of deltas times weight from previous layer
+                sum = 0 # setting sum to 0 for each neuron in hidden layer
                 for m in range(len(layer.neurons)):
                     sum += NN.FullyConnectedLayers[i-1].neurons[m].delta *\
                            NN.FullyConnectedLayers[i-1].neurons[m].weights[j]
+                # computing the delta of current hidden layer
                 for k in range(len(neuron.weights)):
                     neuron.delta = neuron.calculate_delta_hidden(sum)
-                    error_weight = neuron.delta * vec_input_neurons[k]
+                    # If-statement: Determining if NN is at the input layer or not
+                    # If at input layer: Use original input vector to determine the error weight
+                    # If at another hidden layer: use the output of the neuron
+                    if i == (NN.number_layers-1):
+                        error_weight = neuron.delta * vec_input_neurons[k]
+                    else:
+                        error_weight = neuron.delta * NN.FullyConnectedLayers[i+1].neurons[j].output
+                    # Computing the updated weights based on the current weight - learning rate * times error of weight
                     updated_weight = neuron.weights[k] - NN.learn_rate * error_weight
+                    # storing updated weights in vector "updated_weight" as an attribute of each neuron
+                    # Storing is necessary for computing errors of all weights in successive hidden layers
+                    # Later the weights are updated by setting neuron.weights = neuron.updated_weights
                     neuron.updated_weights.append(updated_weight)
+                # Updating the bias for each neuron w.r.t. their delta
+                neuron.updated_bias = neuron.bias - NN.learn_rate * neuron.delta
                 print("updated weights hidden: ", neuron.updated_weights)
+    # reverse the order of the list containing the individual layer objects
+    # necessary for next samples training iteration --> correct feed forward information
+    NN.FullyConnectedLayers.reverse()
+
 
 
 if __name__ == '__main__':
