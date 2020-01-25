@@ -59,12 +59,12 @@ class Neuron:
             return log_act(z)
         elif self.activation_function == "linear":
             return lin_act(z)
-        elif self.activation_function == "Perceptron":
-            return perceptron_act(z)
+
 
     # calculate - class method - computes the weighted sum of inputs
     # for respective activation function (activate() method is called)
     def calculate(self, input_previous_layer):
+        print(self.weights)
         return self.activate(self.bias + np.dot(self.weights, input_previous_layer))
 
     # Method to calculate the delta values for the neuron if in the output layer
@@ -193,6 +193,7 @@ class NeuralNetwork:
         # generating a unique vector containing original network input values
         # used to compute the deltas and weights of the final hidden layer (seen from the back-propagation algorithm)
         input_network = input_vec
+
         # loop through each layer of network
         print("Feed-forward algorithm:")
         for i, layer in enumerate(self.FullyConnectedLayers):
@@ -298,15 +299,28 @@ class NeuralNetwork:
 
 
 
-    def train(self, input_vec, actual_output_network):
-        for i, sample in enumerate(input_vec):
-            print("Sample: {}".format(sample))
+    def train(self, num_samples, input_vec, actual_output_network):
+        # set up if statement if commandline argument is "example" then execute this one"
+        """
+        for i in range(num_samples):
+            print("Sample: {}".format(input_vec))
             print()
-            orig_vec = self.feed_forward(sample, actual_output_network[i])
+            orig_vec = self.feed_forward(input_vec, actual_output_network)
             self.back_propagation(orig_vec, actual_output_network)
             self.update_weights_bias()
+        """
 
 
+        # elif command line argument is "and" then execute this code.
+
+        for j in range(num_samples):
+            for i, sample in enumerate(input_vec):
+                print("Sample: {}".format(sample))
+                print()
+                orig_vec = self.feed_forward(sample, actual_output_network[i])
+                self.back_propagation(orig_vec, actual_output_network)
+                self.update_weights_bias()
+        # elif command line argument is "xor" then execute this code.
 
 """
 Activation Functions with their respective prime functions
@@ -349,18 +363,19 @@ def mse_loss(predicted_output, actual_output):
     return np.square(np.subtract(predicted_output, actual_output)) * 1 / 2
 
 
-def bin_cross_entropy_loss(predicted_output, actual_output):
-    pass
+def bin_cross_entropy_loss(num_samples, predicted_output, actual_output):
+    return 1/num_samples * np.sum(-(actual_output*np.log(predicted_output)
+                                    + (1-actual_output)*np.log(1-predicted_output)))
 
 
-vec_AF = ["logistic"]
+vec_AF = ["logistic", "logistic"]
 weights_TEST = [[(0.15, 0.2), (0.25, 0.3)], [(0.4, 0.45), (0.50, 0.55)]]
 bias_Test = [0.35, 0.60]
 
 
 
-#input_vec = [0.05, 0.10]
-#actual_output_network = [0.01, 0.99]
+input_vec = [0.05, 0.10]
+actual_output_network = [0.01, 0.99]
 
 input_XOR_AND = [[0, 0], [0, 1], [1, 0], [1, 1]]
 output_XOR = [0, 1, 1, 0]
@@ -380,21 +395,21 @@ def main():
     # output of neurons from layer will be input of neurons in following layer
     global input_vec
     NN.train(num_samples=2, input_vec=input_vec, actual_output_network=actual_output_network)
-
-
+    """
+    """
     NN = NeuralNetwork(num_layers=1, num_neurons_layer=[1], vec_activation_function=vec_AF, num_input=2,
                        loss_function="MSE", learn_rate=0.5, weights_network=None, bias_network=None)
     # setting input_vec to global, since the variable has to be changed for feed forward information
     # output of neurons from layer will be input of neurons in following layer
     global input_vec
     NN.train(input_vec=input_XOR_AND, actual_output_network=output_AND)
+    
     """
-
     NN = NeuralNetwork(num_layers=1, num_neurons_layer=[1], vec_activation_function=vec_AF, num_input=2,
-                       loss_function="MSE", learn_rate=0.5, weights_network=None, bias_network=None)
+                       loss_function="MSE", learn_rate=6, weights_network=None, bias_network=None)
 
     global input_vec
-    NN.train(input_vec=input_XOR_AND, actual_output_network=output_XOR)
+    NN.train(num_samples=2, input_vec=input_XOR_AND, actual_output_network=output_AND)
 
 
 
