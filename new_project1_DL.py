@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import copy
 
 
 class Neuron:
@@ -8,10 +9,14 @@ class Neuron:
         self.number_input = number_input
         self.learning_rate = learning_rate
         self.bias = bias
+        self.updated_bias = None
 
-        # stores calculated output
+        # stores output computed within the feed-forward algorithm
         self.output = None
+        # stores delta computed within the back-propagation algorithm
+        self.delta = None
 
+        self.updated_weights = []
         if weights is None:
             self.weights = np.random.uniform(0, 1, self.number_input)
         else:
@@ -30,10 +35,28 @@ class Neuron:
     def calculate(self, input_vector):
         return self.activate(self.bias + np.dot(self.weights, input_vector))
 
-    def print(self):
-        print(self.weights)
-        print(self.bias)
-        print(self.number_input)
+    # Method to calculate the delta values for the neuron if in the output layer
+    def calculate_delta_output(self, actual_output_network):
+        if self.activation_function == "logistic":
+            return -(actual_output_network - self.output) * log_act_prime(self.output)
+        elif self.activation_function == "linear":
+            return -(actual_output_network - self.output) * lin_act_prime(self.output)
+
+    # Method to calculate the delta values for the neuron if in the hidden layer
+    def calculate_delta_hidden(self, delta_sum):
+        if self.activation_function == "logistic":
+            return delta_sum * log_act_prime(self.output)
+        elif self.activation_function == "linear":
+            return delta_sum * lin_act_prime(self.output)
+
+    # Method which updates the weight and bias
+    # class attributes self.updated_weights and self.updated_bias are cleared or set to None
+    # for next training sample iteration
+    def update_weights_bias(self):
+        self.weights = copy.deepcopy(self.updated_weights)
+        self.updated_weights.clear()
+        self.bias = copy.deepcopy(self.updated_bias)
+        self.updated_bias = None
 
 
 class FullyConnectedLayer:
@@ -61,23 +84,20 @@ class FullyConnectedLayer:
                 self.neurons.append(Neuron(activation_function=activation_function, number_input=self.number_input,
                                            learning_rate=self.learning_rate, weights=self.weights[i], bias=self.bias))
 
-    def print(self):
-        print(self.neurons)
-        for neuron in self.neurons:
-            neuron.print()
-
     # Method calculates the output of each neuron based on the sum of the weights * input + bias of this neuron
     # storing computed output of each neuron in the neuron --> later used for back propagation
     # returns array with final output --> necessary to compute the total accrued loss
     def calculate(self, input_vector):
         output_curr_layer = []
         for neuron in self.neurons:
-            neuron.output = neuron.calculate(input_vector)
-            print("Output Neuron: ",neuron.output)
+            neuron.output = neuron.calculate(input_vector=input_vector)
+            print("Output Neuron: ", neuron.output)
             output_curr_layer.append(neuron.output)
         return output_curr_layer
 
-
+    def update_weights_bias(self):
+        for neuron in self.neurons:
+            neuron.update_weights_bias()
 
 
 class NeuralNetwork:
@@ -131,6 +151,7 @@ class NeuralNetwork:
                                                                              self.number_neurons_layer[i - 1]),
                                                                          learning_rate=self.learning_rate,
                                                                          weights=self.weights[i], bias=self.bias[i]))
+
     # Method to compute the losses at each output neuron
     # mse_loss: Mean Squared Error
     # bin_cross_entropy_loss: Binary Cross Entropy
@@ -141,8 +162,6 @@ class NeuralNetwork:
             return mse_loss(predicted_output, actual_output)
         elif self.loss_function == "BinCrossEntropy":
             return bin_cross_entropy_loss(predicted_output, actual_output)
-
-
 
     def print(self):
         print(self.FullyConnectedLayers)
@@ -158,31 +177,87 @@ class NeuralNetwork:
         global output_curr_layer
         for i, layer in enumerate(self.FullyConnectedLayers):
             print("Layer: ", i)
-            output_curr_layer = layer.calculate(input_vector)
+            output_curr_layer = layer.calculate(input_vector=input_vector)
             input_vector = output_curr_layer
-        return(output_curr_layer)
+        return (output_curr_layer)
+
+
+
+
+
+
+
+
+
 
     # Method for Back-Propagation algorithm: Used for updating weights and biases of all neurons in all layers
-    def back_propagation(self):
+    def back_propagation(self, input_vector, actual_output_network):
         # Reverse list containing layer objects since back propagation
         # starts updating with weights connected to output layer
         self.FullyConnectedLayers.reverse()
-        for j, layer in enumerate(self.FullyConnectedLayers):
-            # IF-statement to determine at which layer the weights are updated
-            # Weights at output layer need slightly different calculations / algorithm
+        for index_layer, layer in enumerate(self.FullyConnectedLayers):
             # j = 0 --> output layer
             # j > 0 --> any hidden layer
-            if j == 0:
-                pass
+            if index_layer == 0:
+                # Loop: Compute the delta for each neuron in output_neuron
+                # actual_output_network[neuron_index]: index of actual output at output neurons of network
+                for neuron_index, neuron in enumerate(layer.neurons):
+                    neuron.delta = neuron.calculate_delta_output(actual_output_network=actual_output_network[neuron_index])
+                    print("Delta Neuron Output: ", neuron.delta)
+                    # IF-statement used to select algorithm for AND / XOR case with one perceptron
+                    if len(self.FullyConnectedLayers) == 1:
+                        for index_input, input in enumerate(input_vector):
+                            error_weight = neuron.delta * input
+                            updated_weight = neuron.weights[index_input] - self.learning_rate * error_weight
+                            neuron.updated_weights.append(updated_weight)
+                        print("Updated Weights Perceptron:" , neuron.updated_weights)
+                    elif len(self.FullyConnectedLayers) > 1:
+                        # regular network, get outputs from neurons of following hidden layer
+                        # number of outputs is equal to number of weights of neuron in current layer
+                        for hid_neuron_index, hid_neuron in enumerate(
+                                self.FullyConnectedLayers[index_layer + 1].neurons):
+                            error_weight = neuron.delta * hid_neuron.output
+                            updated_weight = neuron.weights[hid_neuron_index] - self.learning_rate * error_weight
+                            neuron.updated_weights.append(updated_weight)
+                    print("Updated Weights Output Layer", neuron.updated_weights)
+                    # updating Bias of neuron
+                    neuron.updated_bias = neuron.bias - self.learning_rate * neuron.delta
+            else:
+                for neuron_index, neuron in enumerate(layer.neurons):
+                    delta_sum = 0
+                    for previous_neuron in self.FullyConnectedLayers[index_layer-1].neurons:
+                        delta_sum += previous_neuron.delta * previous_neuron.weights[neuron_index]
+                    neuron.delta = neuron.calculate_delta_hidden(delta_sum=delta_sum)
+                    if index_layer == (len(self.FullyConnectedLayers)-1):
+                        for index_input, input in enumerate(input_vector):
+                            error_weight = neuron.delta * input
+                            updated_weight = neuron.weights[index_input] - self.learning_rate * error_weight
+                            neuron.updated_weights.append(updated_weight)
+                        print("here", neuron.updated_weights)
+                    else:
+                        for hid_neuron_index, hid_neuron in enumerate(
+                                self.FullyConnectedLayers[index_layer + 1].neurons):
+                            error_weight = neuron.delta * hid_neuron.output
+                            updated_weight = neuron.weights[hid_neuron_index] - self.learning_rate * error_weight
+                            neuron.updated_weights.append(updated_weight)
+                        print("Updated weights: ", neuron.updated_weights)
+                    # updating Bias of neuron
+                    neuron.updated_bias = neuron.bias - self.learning_rate * neuron.delta
 
+    def update_weights_bias(self):
+        # reverse the order of the list containing the individual layer objects
+        # necessary for next samples training iteration --> correct feed forward information
+        self.FullyConnectedLayers.reverse()
+        for layer in self.FullyConnectedLayers:
+            layer.update_weights_bias()
 
     def train(self, input_vector, actual_output_network):
         predicted_output_network = self.feed_forward(input_vector)
         total_loss = np.sum(self.calculateloss(predicted_output_network, actual_output_network))
         print('Total Loss Network:', total_loss)
 
-        self.back_propagation()
-
+        self.back_propagation(input_vector, actual_output_network)
+        self.update_weights_bias()
 
 
 def perceptron_act(z):
@@ -220,32 +295,26 @@ def bin_cross_entropy_loss(num_samples, predicted_output, actual_output):
 
 # Driver code main()
 def main(argv=None):
-    # single step of back-propagation using example from class
-    example_input = [0.05, 0.10]
-    example_output = [0.01, 0.99]
-    example_weights = [[(0.15, 0.20), (0.25, 0.30)], [(0.40, 0.45), (0.50, 0.55)]]
-    example_biases = [0.35, 0.60]
+    if sys.argv[1] == 'example':
+        print(argv[1])
+        # single step of back-propagation using example from class
 
-    NN = NeuralNetwork(number_layers=2, number_neurons_layer=[2, 2], loss_function='MSE',
-                       activation_functions_layer=['logistic', 'logistic'], number_input_nn=2, learning_rate=0.5,
-                       weights=example_weights, bias=example_biases)
-    #NN.print() # mock NN.method
-    NN.train(example_input, example_output)
+        example_input = [0.05, 0.10]
+        print(example_input)
+        example_output = [0.01, 0.99]
+        example_weights = [[(0.15, 0.20), (0.25, 0.30)], [(0.40, 0.45), (0.50, 0.55)]]
+        example_biases = [0.35, 0.60]
 
-    """
-    if argv == 'example':
         NN = NeuralNetwork(number_layers=2, number_neurons_layer=[2, 2], loss_function='MSE',
                            activation_functions_layer=['logistic', 'logistic'], number_input_nn=2, learning_rate=0.5,
-                           weights=None, bias=None)
-        NN.print()
-        a
+                           weights=example_weights, bias=example_biases)
+        NN.train(example_input, example_output)
 
-    elif argv == 'and':
+    elif argv[1] == 'and':
         pass
 
-    elif argv == 'xor':
+    elif argv[1] == 'xor':
         pass
-    """
 
 
 if __name__ == '__main__':
