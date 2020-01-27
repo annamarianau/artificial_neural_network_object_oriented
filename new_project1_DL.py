@@ -102,7 +102,7 @@ class FullyConnectedLayer:
 
 class NeuralNetwork:
     def __init__(self, number_layers, number_neurons_layer, loss_function, activation_functions_layer, number_input_nn,
-                 learning_rate, weights=None, bias=None):
+                 learning_rate, weights=None, bias=None, xor_advanced=None):
         self.number_layers = number_layers  # Scalar-value (e.g., 2 - 1 hidden and 1 output layer)
         self.number_neurons_layer = number_neurons_layer  # Array (e.g., [2,2] - 2 Neurons HL and 2 Neurons in OL)
         self.loss_function = loss_function  # String-variable (e.g., "MSE" or "BCE")
@@ -112,6 +112,7 @@ class NeuralNetwork:
         self.learning_rate = learning_rate  # Scalar-value (e.g., 0.5 - passed down to each neuron)
         self.bias = bias  # Bias is generated in or passed to FullyConnectedLayer
         self.weights = weights  # Weights are passed to FullyConnectedLayer / Neuron object
+        self.xor = xor_advanced
 
         self.FullyConnectedLayers = []
         for i in range(self.number_layers):
@@ -152,6 +153,7 @@ class NeuralNetwork:
                                                                          learning_rate=self.learning_rate,
                                                                          weights=self.weights[i], bias=self.bias[i]))
 
+
     # Method to compute the losses at each output neuron
     # mse_loss: Mean Squared Error
     # bin_cross_entropy_loss: Binary Cross Entropy
@@ -182,6 +184,7 @@ class NeuralNetwork:
         # starts updating with weights connected to output layer
         self.FullyConnectedLayers.reverse()
         for index_layer, layer in enumerate(self.FullyConnectedLayers):
+            print(layer.neurons)
             # j = 0 --> output layer
             # j > 0 --> any hidden layer
             if index_layer == 0:
@@ -191,7 +194,7 @@ class NeuralNetwork:
                 for neuron_index, neuron in enumerate(layer.neurons):
                     print("Updated Weights and bias for neuron {} in output layer:".format(neuron_index+1))
                     # IF-statement used to determine number of neurons in output layer
-                    if len(layer.neurons) == 1:
+                    if len(self.FullyConnectedLayers[0].neurons) == 1:
                         neuron.delta = neuron.calculate_delta_output(actual_output_network=actual_output_network)
                     else:
                         neuron.delta = neuron.calculate_delta_output(actual_output_network=actual_output_network[neuron_index])
@@ -361,13 +364,12 @@ def main(argv=None):
         NN_xor_normal = NeuralNetwork(number_layers=1, number_neurons_layer=[1], loss_function='MSE',
                            activation_functions_layer=['logistic'], number_input_nn=2, learning_rate=6,
                            weights=None, bias=None)
-        NN_xor_normal.train(xor_input, xor_output, argv[1], 100)
-        """
-        NN_xor_advanced = NeuralNetwork(number_layers=2, number_neurons_layer=[1, 1], loss_function='MSE',
-                           activation_functions_layer=['logistic', 'logistic'], number_input_nn=2, learning_rate=6,
+        NN_xor_normal.train(xor_input, xor_output, argv[1], 1)
+
+        NN_xor_advanced = NeuralNetwork(number_layers=3, number_neurons_layer=[2, 2, 1], loss_function='MSE',
+                           activation_functions_layer=['logistic', 'logistic', 'logistic'], number_input_nn=2, learning_rate=8,
                            weights=None, bias=None)
-        NN_xor_advanced.train(xor_input, xor_output, argv[1], 100)
-        """
+        NN_xor_advanced.train(xor_input, xor_output, argv[1], 1000)
 
 
 if __name__ == '__main__':
