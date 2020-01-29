@@ -340,6 +340,7 @@ class NeuralNetwork:
                 total_loss_all_epochs.append(np.mean(total_loss_epoch))
             return(total_loss_all_epochs)
 
+
         elif argv == 'xor':
             total_loss_all_epochs = []
             for i in range(epochs):
@@ -409,6 +410,18 @@ def mse_loss(predicted_output, actual_output):
 def bin_cross_entropy_loss(predicted_output, actual_output, num_samples):
     return 1 / num_samples * -(actual_output * np.log(predicted_output) + (1 - actual_output) * np.log(1 - predicted_output))
 
+def plot_loss(y_loss, x_learning_rate_or_epochs):
+    plt.figure()
+    plt.title('Total loss for different Learning Rates - XOR Case (Perceptron)')
+    plt.xlabel('Learning Rate')
+    plt.ylabel('Loss Network')
+    x = np.arange(start=0.1, stop=1.1, step=0.1)
+    #learn_rates = ['0.5', '1.0', '1.5', '2.0', '2.5', '3.0']
+    plt.plot(x, y_loss)
+    #for i in range(len(x_learning_rate_or_epochs)):
+    #    plt.plot(x, y_loss)#, label="Learning Rate vs Loss")
+    plt.show()
+
 
 # Driver code main()
 def main(argv=None):
@@ -424,19 +437,45 @@ def main(argv=None):
                                    learning_rate=0.5,
                                    weights=example_weights, bias=example_biases)
         NN_example.train(input_vector=example_input, actual_output_network=example_output, argv=argv[1], epochs=2)
+        """
+        learn_rate_list = np.arange(start=0.5, stop=3.5, step=0.5)
+        loss_learn = []
+        for learn_rate in learn_rate_list:
+            NN_example = NeuralNetwork(number_layers=2, number_neurons_layer=[2, 2], loss_function='MSE',
+                               activation_functions_layer=['logistic', 'logistic'], number_input_nn=2, learning_rate=0.5,
+                               weights=example_weights, bias=example_biases)
+            loss = NN_example.train(example_input, example_output, argv[1], 2)
+            loss_learn.append(loss)
+        plot_loss(loss_learn, learn_rate_list)
+        """
+
 
     elif argv[1] == 'and':
         and_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
         and_output = [0, 0, 0, 1]
         print("Perceptron with Logic Gate: AND (1000 Epochs)")
 
-
+        """
         NN_and = NeuralNetwork(number_layers=1, number_neurons_layer=[1], loss_function='mse',
                            activation_functions_layer=['logistic'], number_input_nn=2, learning_rate=6,
                            weights=None, bias=None)
         NN_and.train(input_vector=and_input, actual_output_network=and_output, argv=argv[1], epochs=1000)
+        """
+        learn_rate_list = np.arange(start=0.1, stop=1.1, step=0.1)
+        loss_learn = []
+        for learn_rate in learn_rate_list:
+            and_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
+            and_output = [0, 0, 0, 1]
+            NN_and = NeuralNetwork(number_layers=1, number_neurons_layer=[1], loss_function='mse',
+                                   activation_functions_layer=['logistic'], number_input_nn=2, learning_rate=learn_rate,
+                                   weights=None, bias=None)
+            loss = NN_and.train(input_vector=and_input, actual_output_network=and_output, argv=argv[1], epochs=1)
+            loss_learn.append(loss)
+        plot_loss(loss_learn, learn_rate_list)
+
 
     elif argv[1] == 'xor':
+        """
         xor_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
         xor_output = [0, 1, 1, 0]
         print("Perceptron with Logic Gate: XOR (1000 Epochs)")
@@ -444,13 +483,28 @@ def main(argv=None):
                            activation_functions_layer=['logistic'], number_input_nn=2, learning_rate=8,
                            weights=None, bias=None)
         NN_xor_normal.train(input_vector=xor_input, actual_output_network=xor_output, argv=argv[1], epochs=1000)
+        
+
         print()
-        print("Single-Layer NN (2 Inputs, 2 Hidden Neurons, 1 Output Neuron) for Logic Gate : XOR (10000 Epochs)")
+        print("Single-Layer NN (2 Inputs, 2 Hidden Neurons, 1 Output Neuron) for Logic Gate : XOR (1000 Epochs)")
         NN_xor_advanced = NeuralNetwork(number_layers=2, number_neurons_layer=[2, 1], loss_function='MSE',
                            activation_functions_layer=['logistic', 'logistic'], number_input_nn=2, learning_rate=8,
                            weights=None, bias=None)
-        NN_xor_advanced.train(input_vector=xor_input, actual_output_network=xor_output, argv=argv[1], epochs=10000)
+        NN_xor_advanced.train(input_vector=xor_input, actual_output_network=xor_output, argv=argv[1], epochs=1000)
+        """
 
+        learn_rate_list = np.arange(start=0.1, stop=1.1, step=0.1)
+        loss_learn = []
+
+        for learn_rate in learn_rate_list:
+            xor_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
+            xor_output = [0, 1, 1, 0]
+            NN_xor_normal = NeuralNetwork(number_layers=1, number_neurons_layer=[1], loss_function='MSE',
+                           activation_functions_layer=['logistic'], number_input_nn=2, learning_rate=learn_rate,
+                           weights=None, bias=None)
+            loss = NN_xor_normal.train(input_vector=xor_input, actual_output_network=xor_output, argv=argv[1], epochs=1)
+            loss_learn.append(loss)
+        plot_loss(loss_learn, learn_rate_list)
 
 
 if __name__ == '__main__':

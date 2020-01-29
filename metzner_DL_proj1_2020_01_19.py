@@ -148,9 +148,9 @@ bias_Test = [1,2]
 # Driver code main()
 def main():
     NN = NeuralNetwork(num_layers=2, num_neurons_layer=[2, 2], vec_activationFunction=vec_AF, num_Input=2, lossFunction="MSE", learnRate=0.01, actualOutput=[0.01, 0.99], weightsNetwork=weights_TEST, biasNetwork=bias_Test)
-    print(NN.number_neurons_layer)
-    print(NN.weights)
-    print(NN.bias)
+
 
 if __name__ == '__main__':
     main()
+
+    
