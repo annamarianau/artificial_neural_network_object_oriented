@@ -11,6 +11,7 @@ Date: 01/24/2020
 import numpy as np
 import sys
 import copy
+import matplotlib.pyplot as plt
 
 
 """
@@ -288,26 +289,32 @@ class NeuralNetwork:
         global total_loss
         # Train network based on given argv
         if argv == 'example':
-            print("FeedForward Algorithm")
-            print("#####################")
-            predicted_output_network = self.feed_forward(input_vector)
-            if self.loss_function == 'mse':
-                total_loss = np.sum(self.calculateloss(predicted_output_network, actual_output_network))
-            elif self.loss_function == 'bincrossentropy':
-                # predicted_output_network and actual_output_network are given as an array
-                # loss functions only works with scalar values thus... list.pop(0) to get first value of list
-                predicted_output = predicted_output_network.pop(0)
-                actual_output = actual_output_network.pop(0)
-                total_loss = np.sum(self.calculateloss(predicted_output, actual_output, len(input_vector)))
-            print('Total Loss Network:', total_loss)
-            print()
-            print("BackPropagation Algorithm")
-            print("#########################")
-            self.back_propagation(input_vector, actual_output_network)
-            self.update_weights_bias()
-            print()
+            total_loss_list = []
+            for i in range(epochs):
+                print("FeedForward Algorithm")
+                print("#####################")
+                predicted_output_network = self.feed_forward(input_vector)
+                if self.loss_function == 'mse':
+                    total_loss = np.sum(self.calculateloss(predicted_output_network, actual_output_network))
+                elif self.loss_function == 'bincrossentropy':
+                    # predicted_output_network and actual_output_network are given as an array
+                    # loss functions only works with scalar values thus... list.pop(0) to get first value of list
+                    predicted_output = predicted_output_network.pop(0)
+                    actual_output = actual_output_network.pop(0)
+                    total_loss = np.sum(self.calculateloss(predicted_output, actual_output, len(input_vector)))
+                total_loss_list.append(total_loss)
+                print('Total Loss Network:', total_loss)
+                print()
+                print("BackPropagation Algorithm")
+                print("#########################")
+                self.back_propagation(input_vector, actual_output_network)
+                self.update_weights_bias()
+                print()
+            final_loss = total_loss_list.pop(epochs - 1)
+            return(final_loss)
 
         elif argv == 'and':
+            total_loss_list = []
             for i in range(epochs):
                 for sample_index, sample in enumerate(input_vector):
                     print(sample_index)
@@ -323,6 +330,7 @@ class NeuralNetwork:
                         # loss functions only works with scalar values thus... list.pop(0) to get first value of list
                         predicted_output = predicted_output_network.pop(0)
                         total_loss = np.sum(self.calculateloss(predicted_output, actual_output_network[sample_index], len(input_vector)))
+                    total_loss_list.append(total_loss)
                     print('Total Loss Network:', total_loss)
                     print()
                     print("BackPropagation Algorithm")
@@ -330,6 +338,8 @@ class NeuralNetwork:
                     self.back_propagation(sample, actual_output_network[sample_index])
                     self.update_weights_bias()
                 print()
+            return(total_loss_list)
+
 
         elif argv == 'xor':
             for i in range(epochs):
@@ -397,6 +407,15 @@ def mse_loss(predicted_output, actual_output):
 def bin_cross_entropy_loss(predicted_output, actual_output, num_samples):
     return 1 / num_samples * -(actual_output * np.log(predicted_output) + (1 - actual_output) * np.log(1 - predicted_output))
 
+def plot_loss(total_loss_over_x):
+    plt.title('Total loss for different Learning Rates')
+    plt.xlabel('Learning Rate')
+    plt.ylabel('Loss Network')
+    y = np.arange(start=0.001, stop=1, step=0.001)
+    print(y)
+    print(total_loss_over_x)
+    plt.plot(y, total_loss_over_x)
+    plt.show()
 
 # Driver code main()
 def main(argv=None):
@@ -406,11 +425,17 @@ def main(argv=None):
         example_output = [0.01, 0.99]
         example_weights = [[(0.15, 0.20), (0.25, 0.30)], [(0.40, 0.45), (0.50, 0.55)]]
         example_biases = [0.35, 0.60]
-
-        NN_example = NeuralNetwork(number_layers=2, number_neurons_layer=[2, 2], loss_function='MSE',
-                           activation_functions_layer=['logistic', 'logistic'], number_input_nn=2, learning_rate=0.5,
-                           weights=example_weights, bias=example_biases)
-        NN_example.train(example_input, example_output, argv[1])
+        learn_rate_list = np.arange(start=0.001, stop=1, step=0.001)
+        print(learn_rate_list)
+        loss_learn = []
+        for learn_rate in learn_rate_list:
+            NN_example = NeuralNetwork(number_layers=2, number_neurons_layer=[2, 2], loss_function='MSE',
+                               activation_functions_layer=['logistic', 'logistic'], number_input_nn=2, learning_rate=learn_rate,
+                               weights=example_weights, bias=example_biases)
+            loss = NN_example.train(example_input, example_output, argv[1], 100)
+            loss_learn.append(loss)
+        print(len(loss_learn))
+        plot_loss(loss_learn)
 
     elif argv[1] == 'and':
         and_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
@@ -419,6 +444,7 @@ def main(argv=None):
                            activation_functions_layer=['logistic'], number_input_nn=2, learning_rate=6,
                            weights=None, bias=None)
         NN_and.train(and_input, and_output, argv[1], 100)
+
 
     elif argv[1] == 'xor':
         xor_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
