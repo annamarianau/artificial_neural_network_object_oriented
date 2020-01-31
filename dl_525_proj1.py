@@ -43,6 +43,7 @@ class Neuron:
         # If-statement to check if user gave weights or not
         # if no weights given, then generate weights from a uniform distribution
         if weights is None:
+            np.random.seed(2)
             self.weights = np.random.uniform(0, 1, self.number_input)
         else:
             self.weights = weights
